@@ -5,6 +5,7 @@ import connectDB from "./configs/db.js";
 import { clerkMiddleware } from '@clerk/express'
 import { serve } from "inngest/express";
 import { inngest, functions } from "./innjest/index.js";
+import showRouter from "./routes/showRouter.js";
 
 
 const app = express();
@@ -24,6 +25,9 @@ app.get("/", (req, res) => {
 
 // Set up the "/api/inngest" (recommended) routes with the serve handler
 app.use("/api/inngest", serve({ client: inngest, functions }));
+
+// Routers
+app.use("/api/show", showRouter)
 
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
