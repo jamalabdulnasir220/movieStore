@@ -2,21 +2,22 @@ import express from "express";
 import cors from "cors";
 import "dotenv/config";
 import connectDB from "./configs/db.js";
-import { clerkMiddleware } from '@clerk/express'
+import { clerkMiddleware } from "@clerk/express";
 import { serve } from "inngest/express";
 import { inngest, functions } from "./innjest/index.js";
 import showRouter from "./routes/showRouter.js";
-
+import bookingRouter from "./routes/bookingRoutes.js";
+import adminRouter from "./routes/adminRouter.js";
 
 const app = express();
 const port = 3000;
 
-await connectDB()
+await connectDB();
 
 // Middleware
 app.use(express.json());
 app.use(cors());
-app.use(clerkMiddleware())
+app.use(clerkMiddleware());
 
 // API Routes
 app.get("/", (req, res) => {
@@ -27,7 +28,9 @@ app.get("/", (req, res) => {
 app.use("/api/inngest", serve({ client: inngest, functions }));
 
 // Routers
-app.use("/api/show", showRouter)
+app.use("/api/show", showRouter);
+app.use("/api/booking", bookingRouter)
+app.use("/api/admin", adminRouter)
 
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
