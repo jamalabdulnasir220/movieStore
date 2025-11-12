@@ -6,14 +6,17 @@ import {
   UserIcon,
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
-import { dummyDashboardData } from "../../assets/assets";
 import Loading from "../../components/Loading";
 import Title from "../../components/admin/Title";
 import BlurCircle from "../../components/BlurCircle";
 import { dateFormat } from "../../utils/dateFormat";
+import { useAppContext } from "../../context/AppContext";
+import toast from "react-hot-toast";
 
 const Dashboard = () => {
   const currency = import.meta.env.VITE_CURRENCY;
+
+  const { axios, getToken, user, imageBaseUrl } = useAppContext();
 
   const [dashboardData, setDashboardData] = useState({
     totalBookings: 0,
@@ -48,13 +51,29 @@ const Dashboard = () => {
   ];
 
   const fetchData = async () => {
-    setDashboardData(dummyDashboardData);
-    setIsLoading(false);
+    try {
+      const { data } = await axios.get("/api/admin/dashboard", {
+        headers: {
+          Authorization: `Bearer ${await getToken()}`,
+        },
+      });
+      if (data.success) {
+        setDashboardData(data.dashboardData);
+        setIsLoading(false);
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      console.error("Error fetching data", error);
+      toast.error("Error fetching dashboard data", error);
+    }
   };
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    if (user) {
+      fetchData();
+    }
+  }, [user]);
 
   return !isLoading ? (
     <>
@@ -86,7 +105,7 @@ const Dashboard = () => {
           >
             <img
               className="h-60 w-full object-cover"
-              src={show?.movie?.poster_path}
+              src={imageBaseUrl + show?.movie?.poster_path}
               alt="movie poster"
             />
             <p className="font-medium p-2 truncate">{show?.movie?.title}</p>
@@ -100,7 +119,9 @@ const Dashboard = () => {
                 {show?.movie?.vote_average?.toFixed(1)}
               </p>
             </div>
-            <p className="px-2 pt-2 text-sm text-gray-500">{ dateFormat(show?.showDateTime)}</p>
+            <p className="px-2 pt-2 text-sm text-gray-500">
+              {dateFormat(show?.showDateTime)}
+            </p>
           </div>
         ))}
       </div>

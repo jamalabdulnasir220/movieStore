@@ -1,17 +1,21 @@
 import React, { useEffect, useState } from "react";
-import { dummyShowsData } from "../../assets/assets";
 import Loading from "../../components/Loading";
 import Title from "../../components/admin/Title";
 import { CheckIcon, DeleteIcon, StarIcon } from "lucide-react";
 import { convertToK } from "../../utils/convertToK";
+import { useAppContext } from "../../context/AppContext";
+import toast from "react-hot-toast";
 
 const AddShows = () => {
+  const { axios, getToken, user, imageBaseUrl } = useAppContext();
+
   const currency = import.meta.env.VITE_CURRENCY;
   const [nowPlayingMovies, setNowPlayingMovies] = useState([]);
   const [selectedMovie, setSelectedMovie] = useState(null);
   const [dateTimeSelection, setDateTimeSelection] = useState({});
   const [dateTimeInput, setDateTimeInput] = useState("");
   const [showPrice, setShowPrice] = useState("");
+  const [addingShow, setAddingShow] = useState(false);
 
   const handleAddDateTime = () => {
     if (!dateTimeInput) return;
@@ -38,13 +42,64 @@ const AddShows = () => {
     });
   };
 
-  const fetchNowPlayingMovies = () => {
-    setNowPlayingMovies(dummyShowsData);
+  const fetchNowPlayingMovies = async () => {
+    try {
+      const { data } = await axios.get("/api/show/now-playing", {
+        headers: {
+          Authorization: `Bearer ${await getToken()}`,
+        },
+      });
+      if (data.success) {
+        setNowPlayingMovies(data.movies);
+      }
+    } catch (error) {
+      console.error("Error fetching movies", error);
+    }
+  };
+
+  const handleSubmit = async () => {
+    try {
+      setAddingShow(true);
+      if (
+        !selectedMovie ||
+        Object.keys(dateTimeSelection).length === 0 ||
+        !showPrice
+      ) {
+        return toast("Missing required field");
+      }
+      const showInput = Object.entries(dateTimeSelection).map(
+        ([date, time]) => ({ date, time })
+      );
+      const payload = {
+        movieId: selectedMovie,
+        showInput,
+        showPrice: Number(showPrice),
+      };
+      const { data } = await axios.post("/api/show/add-show", payload, {
+        headers: {
+          Authorization: `Bearer ${await getToken()}`,
+        },
+      });
+      if (data.success) {
+        toast.success(data.message);
+        setSelectedMovie(null);
+        setShowPrice("");
+        setDateTimeSelection({});
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      console.error("Error adding show", error);
+      toast.error("An error occured, please try again");
+    }
+    setAddingShow(false);
   };
 
   useEffect(() => {
-    fetchNowPlayingMovies();
-  }, []);
+    if (user) {
+      fetchNowPlayingMovies();
+    }
+  }, [user]);
 
   return nowPlayingMovies.length > 0 ? (
     <>
@@ -61,7 +116,7 @@ const AddShows = () => {
               {/* The image of the movie with ratings */}
               <div className="relative rounded-lg overflow-hidden">
                 <img
-                  src={movie.poster_path}
+                  src={imageBaseUrl + movie.poster_path}
                   alt=""
                   className="w-full object-cover brightness-90"
                 />
@@ -75,12 +130,10 @@ const AddShows = () => {
                   </p>
                 </div>
               </div>
-              {selectedMovie === movie.id ? (
+              {selectedMovie === movie.id && (
                 <div className="absolute top-2 right-2 flex items-center justify-center bg-primary h-6 w-6 rounded">
                   <CheckIcon className="w-4 h-4 text-white" strokeWidth={2.5} />
                 </div>
-              ) : (
-                <div className="absolute top-2 right-2 border border-primary h-6 w-6 rounded"></div>
               )}
               <p className="font-medium truncate">{movie.title}</p>
               <p className="text-gray-400 text-sm">{movie.release_date}</p>
@@ -152,7 +205,11 @@ const AddShows = () => {
           </ul>
         </div>
       )}
-      <button className="bg-primary text-white px-8 py-2 mt-6 rounded hover:bg-primary/90 transition-all cursor-pointer">
+      <button
+        onClick={handleSubmit}
+        disabled={addingShow}
+        className="bg-primary text-white px-8 py-2 mt-6 rounded hover:bg-primary/90 transition-all cursor-pointer"
+      >
         Add Show
       </button>
     </>
