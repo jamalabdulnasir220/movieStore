@@ -7,9 +7,10 @@ export const protectAdmin = async (req, res, next) => {
     const user = await clerkClient.users.getUser(userId);
 
     if (user.privateMetadata.role !== "admin") {
-      return res
-        .status(403)
-        .json({ success: false, message: "Access denied. Admins only." });
+      return res.json({
+        success: false,
+        message: "Access denied. Admins only.",
+      });
     }
     next();
   } catch (error) {

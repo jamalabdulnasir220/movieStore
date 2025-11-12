@@ -1,26 +1,69 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { dummyDateTimeData, dummyShowsData } from "../assets/assets";
 import BlurCircle from "../components/BlurCircle";
 import { Heart, PlayCircleIcon, StarIcon } from "lucide-react";
 import { timeFormat } from "../utils/timeFormat";
 import DateSelect from "../components/DateSelect";
 import MovieCard from "../components/MovieCard";
 import Loading from "../components/Loading";
+import { useAppContext } from "../context/AppContext";
+import toast from "react-hot-toast";
 
 const MovieDetails = () => {
+  const {
+    axios,
+    imageBaseUrl,
+    shows,
+    user,
+    getToken,
+    fetchUserFavoriteMovies,
+    favoriteMovies,
+  } = useAppContext();
   const navigate = useNavigate();
   const { id } = useParams();
 
   const [show, setShow] = useState(null);
 
   const getShow = async () => {
-    const show = dummyShowsData.find((show) => show._id === id);
-    if (show) {
-      setShow({
-        movie: show,
-        dateTime: dummyDateTimeData,
-      });
+    try {
+      const { data } = await axios.get(`/api/show/${id}`);
+      if (data.success) {
+        setShow({
+          movie: data.movie,
+          dateTime: data.dateTime,
+        });
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      console.error("Error getting movie");
+      toast.error("Error getting movie", error);
+    }
+  };
+
+  const handleFavorite = async () => {
+    try {
+      if (!user) {
+        return toast.error("Please login to continue!");
+      }
+      const { data } = await axios.post(
+        "/api/user/update-favorites",
+        {
+          movieId: id,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${await getToken()}`,
+          },
+        }
+      );
+      if (data.success) {
+        await fetchUserFavoriteMovies();
+        toast.success(data.message);
+      }
+    } catch (error) {
+      console.error("Error handling favorite", error);
+      toast.error(error.message);
     }
   };
 
@@ -33,7 +76,7 @@ const MovieDetails = () => {
       <div className="flex flex-col md:flex-row gap-8 max-w-6xl mx-auto">
         <img
           className="max-md:mx-auto rounded-xl h-104 max-w-70 object-cover"
-          src={show.movie?.poster_path}
+          src={imageBaseUrl + show.movie?.poster_path}
           alt="Movie poster"
         />
         <div className="relative flex flex-col gap-3">
@@ -68,8 +111,17 @@ const MovieDetails = () => {
             >
               Buy Tickets
             </a>
-            <button className="bg-gray-700 p-2.5 rounded-full transition cursor-pointer active:scale-95">
-              <Heart className={`w-5 h-5`} />
+            <button
+              onClick={handleFavorite}
+              className="bg-gray-700 p-2.5 rounded-full transition cursor-pointer active:scale-95"
+            >
+              <Heart
+                className={`w-5 h-5 ${
+                  favoriteMovies.find((movie) => movie._id === id)
+                    ? "fill-primary text-primary"
+                    : ""
+                }`}
+              />
             </button>
           </div>
         </div>
@@ -81,7 +133,7 @@ const MovieDetails = () => {
             <div key={index} className="flex flex-col items-center text-center">
               <img
                 className="rounded-full h-20 md:h-20 aspect-square object-cover"
-                src={cast.profile_path}
+                src={imageBaseUrl + cast.profile_path}
                 alt="profile"
               />
               <p className="font-medium text-xs mt-3">{cast.name}</p>
@@ -93,7 +145,7 @@ const MovieDetails = () => {
       <DateSelect id={id} dateTime={show.dateTime} />
       <p className="text-lg font-medium mt-20 mb-8">You May Also Like</p>
       <div className="flex flex-wrap max-sm:justify-center gap-8">
-        {dummyShowsData.slice(0, 4).map((show) => (
+        {shows.slice(0, 4).map((show) => (
           <MovieCard key={show._id} movie={show} />
         ))}
       </div>

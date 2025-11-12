@@ -3,24 +3,42 @@ import { dummyBookingData } from "../../assets/assets";
 import Loading from "../../components/Loading";
 import Title from "../../components/admin/Title";
 import { dateFormat } from "../../utils/dateFormat";
+import { useAppContext } from "../../context/AppContext";
+import toast from "react-hot-toast";
 
 const ListBookings = () => {
   const currency = import.meta.env.VITE_CURRENCY;
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const { axios, getToken, user } = useAppContext();
+
   const getAllBookings = async () => {
     try {
-      setBookings(dummyBookingData);
+      // setBookings(dummyBookingData);
+      const { data } = await axios.get("/api/admin/all-bookings", {
+        headers: {
+          Authorization: `Bearer ${await getToken()}`,
+        },
+      });
+      if (data.success) {
+        setBookings(data.bookings);
+        setLoading(false);
+      } else {
+        toast.error(data.message);
+      }
       setLoading(false);
     } catch (error) {
       console.error("Error fetching bookings:", error);
+      toast.error("Error fetching bookings", error);
     }
   };
 
   useEffect(() => {
-    getAllBookings();
-  }, []);
+    if (user) {
+      getAllBookings();
+    }
+  }, [user]);
 
   return !loading ? (
     <>
