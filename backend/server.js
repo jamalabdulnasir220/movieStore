@@ -9,11 +9,15 @@ import showRouter from "./routes/showRouter.js";
 import bookingRouter from "./routes/bookingRoutes.js";
 import adminRouter from "./routes/adminRouter.js";
 import userRouter from "./routes/userRoutes.js";
+import { stripeWebhook } from "./controllers/stripeWebhook.js";
 
 const app = express();
 const port = 3000;
 
 await connectDB();
+
+// Stripe webhooks route
+app.use("/api/stripe", express.raw({type: "application/json"}), stripeWebhook)
 
 // Middleware
 app.use(express.json());

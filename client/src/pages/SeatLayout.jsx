@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { assets } from "../assets/assets";
 import Loading from "../components/Loading";
 import { ArrowRightIcon, ClockIcon } from "lucide-react";
@@ -9,9 +9,7 @@ import toast from "react-hot-toast";
 import { useAppContext } from "../context/AppContext";
 
 const SeatLayout = () => {
-  const { axios, user, getToken, shows } = useAppContext();
-
-  const navigate = useNavigate();
+  const { axios, user, getToken } = useAppContext();
 
   const groupRows = [
     ["A", "B"],
@@ -115,11 +113,9 @@ const SeatLayout = () => {
         }
       );
       if (data.success) {
-        toast.success(data.message)
-        navigate("/my-bookings")
-      }
-      else {
-        toast.error(data.message)
+        window.location.href = data.url;
+      } else {
+        toast.error(data.message);
       }
     } catch (error) {
       console.error(error);
