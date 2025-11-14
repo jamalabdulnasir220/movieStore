@@ -12,7 +12,7 @@ const transporter = nodemailer.createTransport({
 });
 
 const sendEmail = async ({ to, subject, body }) => {
-  try {
+
     const response = await transporter.sendMail({
       from: process.env.SENDER_EMAIL,
       to,
@@ -20,9 +20,7 @@ const sendEmail = async ({ to, subject, body }) => {
       html: body,
     });
     return response;
-  } catch (error) {
-    return `This is the error ${error}`
-  }
+
 };
 
 export default sendEmail;
