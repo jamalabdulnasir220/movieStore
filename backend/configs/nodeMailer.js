@@ -12,12 +12,13 @@ const transporter = nodemailer.createTransport({
 
 const sendEmail = async ({ to, subject, body }) => {
   const response = await transporter.sendMail({
-    from: process.env.SENDER_EMAIL,
+    from: process.env.SMTP_USER,
     to,
     subject,
     html: body,
   });
   return response;
 };
+
 
 export default sendEmail;
