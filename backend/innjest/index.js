@@ -94,8 +94,6 @@ const sendConfirmationEmail = inngest.createFunction(
       })
       .populate("user");
 
-      console.log("Something is out!!!")
-
     await sendEmail({
       to: booking.user.email,
       subject: `Payment Confirmation: "${booking.show.movie.title}" booked!`,
@@ -129,5 +127,5 @@ export const functions = [
   syncUserDeletion,
   syncUserUpdate,
   releaseSeatsandDeleteBooking,
-  sendConfirmationEmail
+  sendConfirmationEmail,
 ];
