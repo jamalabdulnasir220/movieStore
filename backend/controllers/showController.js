@@ -37,20 +37,27 @@ export const addShow = async (req, res) => {
 
     if (!movie) {
       // Fetch the movie details and the casts/credits from the TMDB database using their api with the movieId
-      const [movieDetailsResponse, movieCreditsResponse] = await Promise.all([
-        axios.get(`https://api.themoviedb.org/3/movie/${movieId}`, {
-          headers: {
-            Authorization: `Bearer ${process.env.TMDB_API_KEY}`,
-          },
-        }),
-        axios.get(`https://api.themoviedb.org/3/movie/${movieId}/credits`, {
-          headers: {
-            Authorization: `Bearer ${process.env.TMDB_API_KEY}`,
-          },
-        }),
-      ]);
+      const [movieDetailsResponse, movieCreditsResponse, movieVideoResponse] =
+        await Promise.all([
+          axios.get(`https://api.themoviedb.org/3/movie/${movieId}`, {
+            headers: {
+              Authorization: `Bearer ${process.env.TMDB_API_KEY}`,
+            },
+          }),
+          axios.get(`https://api.themoviedb.org/3/movie/${movieId}/credits`, {
+            headers: {
+              Authorization: `Bearer ${process.env.TMDB_API_KEY}`,
+            },
+          }),
+          axios.get(`https://api.themoviedb.org/3/movie/${movieId}/videos`, {
+            headers: {
+              Authorization: `Bearer ${process.env.TMDB_API_KEY}`,
+            },
+          }),
+        ]);
       const movieApiData = movieDetailsResponse.data;
       const movieCreditsData = movieCreditsResponse.data;
+      const movieVideoData = movieVideoResponse.data;
 
       const movieDetails = {
         _id: movieId,
@@ -59,6 +66,7 @@ export const addShow = async (req, res) => {
         poster_path: movieApiData.poster_path,
         backdrop_path: movieApiData.backdrop_path,
         release_date: movieApiData.release_date,
+        video: movieVideoData.results,
         original_language: movieApiData.original_language,
         casts: movieCreditsData.cast,
         genres: movieApiData.genres,
@@ -89,7 +97,7 @@ export const addShow = async (req, res) => {
       // Insert multiple show documents into the Show collection
       await Show.insertMany(showToCreate);
     }
-    
+
     // Trigger inngest event.
     await inngest.send({
       name: "app/show.added",

@@ -4,7 +4,8 @@ import BlurCircle from "../components/BlurCircle";
 import { useAppContext } from "../context/AppContext";
 
 const Movies = () => {
-  const {shows} = useAppContext()
+  const { shows } = useAppContext()
+ 
   return shows.length > 0 ? (
     <div className="relative mb-60 my-40 px-6 md:px-16 lg:px-40 xl:px-44 min-h-[80vh] overflow-hidden">
       <BlurCircle top="150px" left="0px"/>

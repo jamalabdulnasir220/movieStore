@@ -14,6 +14,8 @@ export const assets = {
     profile
 }
 
+
+
 export const dummyTrailers = [
     {
         image: "https://img.youtube.com/vi/WpW36ldAqnM/maxresdefault.jpg",

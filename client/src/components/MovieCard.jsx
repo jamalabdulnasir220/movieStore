@@ -30,7 +30,7 @@ const MovieCard = ({ movie }) => {
       <div className="flex justify-between items-center mt-4 pb-3">
         <button
           onClick={() => {
-            navigate(`/movies/${movie.id}`);
+            navigate(`/movies/${movie._id}`);
             scrollTo(0, 0);
           }}
           className="bg-primary hover:bg-primary-dull px-4 py-2 text-xs transition rounded-full font-medium cursor-pointer"

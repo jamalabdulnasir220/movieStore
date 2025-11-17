@@ -9,7 +9,7 @@ const Navbar = () => {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
 
-  const { favoriteMovies } = useAppContext();
+  const { favoriteMovies, isAdmin } = useAppContext();
 
   const { user } = useUser();
   const { openSignIn } = useClerk();
@@ -53,7 +53,8 @@ const Navbar = () => {
             scrollTo(0, 0);
             setIsOpen(false);
           }}
-          to={"/"}
+          to={"/theatres"}
+          className="inline-flex items-center rounded-md bg-yellow-400/10 px-2 py-1 text-xs font-medium text-yellow-500 inset-ring inset-ring-yellow-400/20"
         >
           Theatres
         </Link>
@@ -62,7 +63,8 @@ const Navbar = () => {
             scrollTo(0, 0);
             setIsOpen(false);
           }}
-          to={"/"}
+          to={"/releases"}
+          className="inline-flex items-center rounded-md bg-yellow-400/10 px-2 py-1 text-xs font-medium text-yellow-500 inset-ring inset-ring-yellow-400/20"
         >
           Releases
         </Link>
@@ -75,6 +77,18 @@ const Navbar = () => {
             to={"/favorite"}
           >
             Favorites
+          </Link>
+        )}
+        {isAdmin && (
+          <Link
+            onClick={() => {
+              scrollTo(0, 0);
+              setIsOpen(false);
+            }}
+            to={"/admin"}
+            className="text-amber-100"
+          >
+            Dashboard
           </Link>
         )}
       </div>

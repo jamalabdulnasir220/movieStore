@@ -7,6 +7,7 @@ import { isoTimeFormat } from "../utils/isoTimeformat";
 import BlurCircle from "../components/BlurCircle";
 import toast from "react-hot-toast";
 import { useAppContext } from "../context/AppContext";
+import { LoadingSpinner } from "../components/LoadingSpinner";
 
 const SeatLayout = () => {
   const { axios, user, getToken } = useAppContext();
@@ -25,6 +26,7 @@ const SeatLayout = () => {
   const [selectedTime, setSelectedTime] = useState(null);
   const [show, setShow] = useState(null);
   const [occupiedSeats, setOccupiedSeats] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   const getShow = async () => {
     try {
@@ -100,6 +102,7 @@ const SeatLayout = () => {
       }
       if (!selectedTime || !selectedSeats.length)
         return toast.error("Select a time and seats");
+      setIsLoading(true);
       const { data } = await axios.post(
         "/api/booking/create",
         {
@@ -116,10 +119,12 @@ const SeatLayout = () => {
         window.location.href = data.url;
       } else {
         toast.error(data.message);
+        setIsLoading(false);
       }
     } catch (error) {
       console.error(error);
       toast.error(error.message);
+      setIsLoading(false);
     }
   };
 
@@ -179,8 +184,17 @@ const SeatLayout = () => {
           className="flex items-center gap-1 mt-20 px-10 py-3 text-sm
          bg-primary hover:bg-primary-dull rounded-full font-medium cursor-pointer active:scale-95 transition"
         >
-          Proceed to checkout
-          <ArrowRightIcon strokeWidth={3} className="w-4 h-4" />
+          {isLoading ? (
+            <>
+              <LoadingSpinner size={4} />
+              <span className="ml-2">Processing...</span>
+            </>
+          ) : (
+            <>
+              <span>Proceed to checkout</span>
+              <ArrowRightIcon strokeWidth={3} className="w-4 h-4" />
+            </>
+          )}
         </button>
       </div>
     </div>

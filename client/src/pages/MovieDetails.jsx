@@ -8,6 +8,7 @@ import MovieCard from "../components/MovieCard";
 import Loading from "../components/Loading";
 import { useAppContext } from "../context/AppContext";
 import toast from "react-hot-toast";
+import ReactPlayer from "react-player";
 
 const MovieDetails = () => {
   const {
@@ -21,6 +22,9 @@ const MovieDetails = () => {
   } = useAppContext();
   const navigate = useNavigate();
   const { id } = useParams();
+
+
+  const [open, setOpen] = useState(false);
 
   const [show, setShow] = useState(null);
 
@@ -68,11 +72,20 @@ const MovieDetails = () => {
   };
 
   useEffect(() => {
+    // close modal on Esc
+    const onKey = (e) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    if (open) window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
+
+  useEffect(() => {
     getShow();
   }, [id]);
 
   return show ? (
-    <div className="px-6 md:px-16 lg:px-40 pt-30 md:pt-50">
+    <div className="px-6 md:px-16 lg:px-40 pt-30 md:pt-50 relative">
       <div className="flex flex-col md:flex-row gap-8 max-w-6xl mx-auto">
         <img
           className="max-md:mx-auto rounded-xl h-104 max-w-70 object-cover"
@@ -101,6 +114,7 @@ const MovieDetails = () => {
             <button
               className="flex items-center gap-2 bg-gray-800 px-7 py-3 
             text-sm hover:bg-gray-900 transition rounded-md font-medium cursor-pointer active:scale-95"
+              onClick={() => setOpen(true)}
             >
               <PlayCircleIcon className="w-5 h-5" />
               Watch Trailer
@@ -160,6 +174,45 @@ const MovieDetails = () => {
           Show more
         </button>
       </div>
+      {/* Modal to open */}
+      {open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* backdrop */}
+          <div
+            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+            onClick={() => setOpen(false)}
+          />
+
+          {/* modal container — keeps a 16:9 aspect ratio, limits size on small screens */}
+          <div
+            className="relative w-full max-w-5xl mx-auto rounded-lg overflow-hidden shadow-xl"
+            style={{ maxHeight: "90vh", aspectRatio: "16/9" }}
+            onClick={(e) => e.stopPropagation()} // prevent backdrop click
+          >
+            {/* close button */}
+            <button
+              onClick={() => setOpen(false)}
+              aria-label="Close trailer"
+              className="absolute right-3 top-3 z-10 rounded-full bg-black/50 hover:bg-black/60 p-2 text-white backdrop-blur transition"
+            >
+              ✕
+            </button>
+
+            {/* player wrapper — ReactPlayer fills this */}
+            <div className="w-full h-full">
+              <ReactPlayer
+                src={`https://www.youtube.com/watch?v=${
+                  show.movie.video.filter((v) => v.type === "Trailer")[0].key
+                }`}
+                playing={false}
+                controls={true}
+                width="100%"
+                height="100%"
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   ) : (
     <Loading />
