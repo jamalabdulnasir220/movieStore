@@ -1,6 +1,7 @@
 import axios from "axios";
 import Movie from "../models/movie.js";
 import Show from "../models/show.js";
+import { inngest } from "../innjest/index.js";
 
 // API to get now playing movies from TMDB
 export const nowPlayingMovies = async (req, res) => {
@@ -88,6 +89,14 @@ export const addShow = async (req, res) => {
       // Insert multiple show documents into the Show collection
       await Show.insertMany(showToCreate);
     }
+    
+    // Trigger inngest event.
+    await inngest.send({
+      name: "app/show.added",
+      data: {
+        movieTitle: movie.title,
+      },
+    });
 
     res.json({
       success: true,
