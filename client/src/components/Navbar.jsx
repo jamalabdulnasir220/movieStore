@@ -54,7 +54,7 @@ const Navbar = () => {
             setIsOpen(false);
           }}
           to={"/theatres"}
-          className="inline-flex items-center rounded-md bg-yellow-400/10 px-2 py-1 text-xs font-medium text-yellow-500 inset-ring inset-ring-yellow-400/20"
+          className=""
         >
           Theatres
         </Link>
