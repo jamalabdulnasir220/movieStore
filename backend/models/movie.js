@@ -2,19 +2,22 @@ import mongoose from "mongoose";
 
 const movieSchema = new mongoose.Schema(
   {
-    _id: { type: String, required: true },
+    // TMDB movies use TMDB id string; manual movies will auto-generate a string id.
+    _id: { type: String, default: () => new mongoose.Types.ObjectId().toString() },
     title: { type: String, required: true },
-    overview: { type: String, required: true },
-    poster_path: { type: String, required: true },
-    backdrop_path: { type: String, required: true },
-    release_date: { type: String, required: true },
-    video: {type: Array},
+    overview: { type: String, default: "" },
+    // Accept either TMDB paths (e.g. "/abc.jpg") or full URLs (e.g. "https://...")
+    poster_path: { type: String, default: "" },
+    backdrop_path: { type: String, default: "" },
+    // Keep as string for compatibility with current frontend usage
+    release_date: { type: String, default: "" },
+    video: { type: Array, default: [] },
     original_language: { type: String },
     tagline: { type: String },
-    genres: { type: Array, required: true },
-    casts: { type: Array, required: true },
-    vote_average: { type: Number, required: true },
-    runtime: { type: Number, required: true },
+    genres: { type: Array, default: [] },
+    casts: { type: Array, default: [] },
+    vote_average: { type: Number, default: 0 },
+    runtime: { type: Number, default: 0 },
   },
   {
     timestamps: true,

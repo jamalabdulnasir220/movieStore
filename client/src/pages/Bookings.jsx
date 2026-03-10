@@ -11,6 +11,10 @@ const Bookings = () => {
   const currency = import.meta.env.VITE_CURRENCY;
 
   const { axios, imageBaseUrl, user, getToken } = useAppContext();
+  const getImage = (path) => {
+    if (!path) return "";
+    return path.startsWith("http") ? path : imageBaseUrl + path;
+  };
 
   const [bookings, setBookings] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -58,7 +62,7 @@ const Bookings = () => {
           <div className="flex flex-col md:flex-row">
             <img
               className="md:max-w-45 aspect-video h-auto object-cover object-bottom rounded"
-              src={imageBaseUrl + booking?.show?.movie?.poster_path}
+              src={getImage(booking?.show?.movie?.poster_path)}
               alt="movie path"
             />
             <div className="flex flex-col p-4">

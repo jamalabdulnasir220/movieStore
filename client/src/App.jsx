@@ -14,6 +14,10 @@ import Dashboard from "./pages/admin/Dashboard";
 import AddShows from "./pages/admin/AddShows";
 import ListShows from "./pages/admin/ListShows";
 import ListBookings from "./pages/admin/ListBookings";
+import AddMovie from "./pages/admin/AddMovie";
+import ListMovies from "./pages/admin/ListMovies";
+import AddTheatre from "./pages/admin/AddTheatre";
+import ListTheatres from "./pages/admin/ListTheatres";
 import { useAppContext } from "./context/AppContext";
 import { SignIn } from "@clerk/clerk-react";
 import Loading from "./components/Loading";
@@ -52,6 +56,10 @@ const App = () => {
           }
         >
           <Route index element={<Dashboard />} />
+          <Route path="add-movie" element={<AddMovie />} />
+          <Route path="list-movies" element={<ListMovies />} />
+          <Route path="add-theatre" element={<AddTheatre />} />
+          <Route path="list-theatres" element={<ListTheatres />} />
           <Route path="add-shows" element={<AddShows />} />
           <Route path="list-shows" element={<ListShows />} />
           <Route path="list-bookings" element={<ListBookings />} />

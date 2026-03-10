@@ -19,6 +19,7 @@ const MovieDetails = () => {
     getToken,
     fetchUserFavoriteMovies,
     favoriteMovies,
+    isAdmin,
   } = useAppContext();
   const navigate = useNavigate();
   const { id } = useParams();
@@ -27,6 +28,12 @@ const MovieDetails = () => {
   const [open, setOpen] = useState(false);
 
   const [show, setShow] = useState(null);
+  const [userRating, setUserRating] = useState(null);
+  const [savingRating, setSavingRating] = useState(false);
+  const getImage = (path) => {
+    if (!path) return "";
+    return path.startsWith("http") ? path : imageBaseUrl + path;
+  };
 
   const getShow = async () => {
     try {
@@ -42,6 +49,25 @@ const MovieDetails = () => {
     } catch (error) {
       console.error("Error getting movie");
       toast.error("Error getting movie", error);
+    }
+  };
+
+  const fetchMyRating = async () => {
+    try {
+      if (!user) {
+        setUserRating(null);
+        return;
+      }
+      const { data } = await axios.get(`/api/user/my-rating/${id}`, {
+        headers: {
+          Authorization: `Bearer ${await getToken()}`,
+        },
+      });
+      if (data.success) {
+        setUserRating(data.rating);
+      }
+    } catch (error) {
+      console.error("Error fetching user rating", error);
     }
   };
 
@@ -84,12 +110,75 @@ const MovieDetails = () => {
     getShow();
   }, [id]);
 
+  useEffect(() => {
+    if (user) {
+      fetchMyRating();
+    } else {
+      setUserRating(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, id]);
+
+  const handleRate = async (value) => {
+    try {
+      if (!user) {
+        return toast.error("Please login to rate this movie");
+      }
+      if (isAdmin) {
+        return toast.error("Admins cannot rate movies");
+      }
+      setSavingRating(true);
+      const { data } = await axios.post(
+        "/api/user/rate-movie",
+        { movieId: id, rating: value },
+        {
+          headers: {
+            Authorization: `Bearer ${await getToken()}`,
+          },
+        }
+      );
+      if (data.success) {
+        setUserRating(value);
+        if (show?.movie) {
+          setShow((prev) => ({
+            ...prev,
+            movie: { ...prev.movie, vote_average: data.averageRating },
+          }));
+        }
+        toast.success("Rating saved");
+      } else {
+        toast.error(data.message || "Failed to save rating");
+      }
+    } catch (error) {
+      console.error("Error rating movie", error);
+      toast.error("Failed to save rating");
+    } finally {
+      setSavingRating(false);
+    }
+  };
+
+  const rating = Number.isFinite(Number(show?.movie?.vote_average))
+    ? Number(show.movie.vote_average).toFixed(1)
+    : "0.0";
+  const genresText = Array.isArray(show?.movie?.genres)
+    ? show.movie.genres
+        .map((g) => (typeof g === "string" ? g : g?.name))
+        .filter(Boolean)
+        .join("| ")
+    : "";
+  const year = show?.movie?.release_date
+    ? String(show.movie.release_date).split("-")[0]
+    : "";
+  const trailerKey = Array.isArray(show?.movie?.video)
+    ? show.movie.video.find((v) => v?.type === "Trailer" && v?.key)?.key
+    : undefined;
+
   return show ? (
     <div className="px-6 md:px-16 lg:px-40 pt-30 md:pt-50 relative">
       <div className="flex flex-col md:flex-row gap-8 max-w-6xl mx-auto">
         <img
           className="max-md:mx-auto rounded-xl h-104 max-w-70 object-cover"
-          src={imageBaseUrl + show.movie?.poster_path}
+          src={getImage(show.movie?.poster_path)}
           alt="Movie poster"
         />
         <div className="relative flex flex-col gap-3">
@@ -98,23 +187,51 @@ const MovieDetails = () => {
           <h1 className="text-4xl max-w-96 font-semibold text-balance">
             {show.movie?.title}
           </h1>
-          <div className="flex items-center gap-2 text-gray-300">
-            <StarIcon className="w-5 h-5 fill-primary text-primary" />
-            {show.movie?.vote_average.toFixed(1)} User Rating
+          <div className="flex flex-col gap-1 text-gray-300">
+            <div className="flex items-center gap-2">
+              <StarIcon className="w-5 h-5 fill-primary text-primary" />
+              <span>{rating} Avg rating</span>
+            </div>
+            {!isAdmin && (
+              <div className="flex items-center gap-2 text-sm">
+                <span className="text-gray-400">Your rating:</span>
+                <div className="flex items-center gap-1">
+                  {[1, 2, 3, 4, 5].map((value) => (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => handleRate(value)}
+                      disabled={savingRating}
+                      className="cursor-pointer disabled:cursor-not-allowed"
+                    >
+                      <StarIcon
+                        className={`w-4 h-4 ${
+                          userRating && value <= userRating
+                            ? "text-primary fill-primary"
+                            : "text-gray-500"
+                        }`}
+                      />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
           <p className="text-gray-400 mt-2 text-sm leading-tight max-w-xl">
             {show.movie?.overview}
           </p>
           <p>
-            {timeFormat(show.movie?.runtime)} •{" "}
-            {show.movie?.genres.map((genre) => genre.name).join("| ")} •{" "}
-            {show.movie?.release_date.split("-")[0]}
+            {timeFormat(show.movie?.runtime || 0)}{" "}
+            {genresText ? `• ${genresText} ` : ""} {year ? `• ${year}` : ""}
           </p>
           <div className="flex items-center gap-4 mt-4 flex-wrap">
             <button
               className="flex items-center gap-2 bg-gray-800 px-7 py-3 
             text-sm hover:bg-gray-900 transition rounded-md font-medium cursor-pointer active:scale-95"
-              onClick={() => setOpen(true)}
+              onClick={() => {
+                if (!trailerKey) return toast.error("No trailer available");
+                setOpen(true);
+              }}
             >
               <PlayCircleIcon className="w-5 h-5" />
               Watch Trailer
@@ -147,7 +264,7 @@ const MovieDetails = () => {
             <div key={index} className="flex flex-col items-center text-center">
               <img
                 className="rounded-full h-20 md:h-20 aspect-square object-cover"
-                src={imageBaseUrl + cast.profile_path}
+                src={getImage(cast.profile_path)}
                 alt="profile"
               />
               <p className="font-medium text-xs mt-3">{cast.name}</p>
@@ -201,9 +318,7 @@ const MovieDetails = () => {
             {/* player wrapper — ReactPlayer fills this */}
             <div className="w-full h-full">
               <ReactPlayer
-                src={`https://www.youtube.com/watch?v=${
-                  show.movie.video.filter((v) => v.type === "Trailer")[0].key
-                }`}
+                src={`https://www.youtube.com/watch?v=${trailerKey}`}
                 playing={false}
                 controls={true}
                 width="100%"

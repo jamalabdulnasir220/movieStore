@@ -10,7 +10,7 @@ import { useAppContext } from "../context/AppContext";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 
 const SeatLayout = () => {
-  const { axios, user, getToken } = useAppContext();
+  const { axios, user, getToken, isAdmin } = useAppContext();
 
   const groupRows = [
     ["A", "B"],
@@ -100,6 +100,9 @@ const SeatLayout = () => {
       if (!user) {
         return toast.error("Please Login to proceed!");
       }
+      if (isAdmin) {
+        return toast.error("Admins cannot book shows.");
+      }
       if (!selectedTime || !selectedSeats.length)
         return toast.error("Select a time and seats");
       setIsLoading(true);
@@ -181,8 +184,9 @@ const SeatLayout = () => {
         {/* button */}
         <button
           onClick={bookTickets}
+          disabled={isLoading || isAdmin}
           className="flex items-center gap-1 mt-20 px-10 py-3 text-sm
-         bg-primary hover:bg-primary-dull rounded-full font-medium cursor-pointer active:scale-95 transition"
+         bg-primary hover:bg-primary-dull rounded-full font-medium cursor-pointer active:scale-95 transition disabled:bg-primary/60 disabled:cursor-not-allowed"
         >
           {isLoading ? (
             <>

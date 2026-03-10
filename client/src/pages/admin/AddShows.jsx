@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
 import Loading from "../../components/Loading";
 import Title from "../../components/admin/Title";
-import { CheckIcon, DeleteIcon, StarIcon } from "lucide-react";
-import { convertToK } from "../../utils/convertToK";
+import { CheckIcon, DeleteIcon } from "lucide-react";
 import { useAppContext } from "../../context/AppContext";
 import toast from "react-hot-toast";
 
@@ -10,8 +9,10 @@ const AddShows = () => {
   const { axios, getToken, user, imageBaseUrl } = useAppContext();
 
   const currency = import.meta.env.VITE_CURRENCY;
-  const [nowPlayingMovies, setNowPlayingMovies] = useState([]);
+  const [myMovies, setMyMovies] = useState([]);
+  const [theatres, setTheatres] = useState([]);
   const [selectedMovie, setSelectedMovie] = useState(null);
+  const [selectedTheatre, setSelectedTheatre] = useState("");
   const [dateTimeSelection, setDateTimeSelection] = useState({});
   const [dateTimeInput, setDateTimeInput] = useState("");
   const [showPrice, setShowPrice] = useState("");
@@ -42,19 +43,44 @@ const AddShows = () => {
     });
   };
 
-  const fetchNowPlayingMovies = async () => {
+  const [loadingMovies, setLoadingMovies] = useState(false);
+  const [loadingTheatres, setLoadingTheatres] = useState(false);
+
+  const fetchMyMovies = async () => {
     try {
-      const { data } = await axios.get("/api/show/now-playing", {
+      setLoadingMovies(true);
+      const { data } = await axios.get("/api/admin/movies", {
         headers: {
           Authorization: `Bearer ${await getToken()}`,
         },
       });
       if (data.success) {
-        setNowPlayingMovies(data.movies);
+        setMyMovies(data.movies);
       }
     } catch (error) {
-      console.error("Error fetching movies", error);
+      console.error("Error fetching admin movies", error);
+    } finally {
+      setLoadingMovies(false);
     }
+  };
+
+  const fetchTheatres = async () => {
+    try {
+      setLoadingTheatres(true);
+      const { data } = await axios.get("/api/theatres");
+      if (data.success) {
+        setTheatres(data.theatres);
+      }
+    } catch (error) {
+      console.error("Error fetching theatres", error);
+    } finally {
+      setLoadingTheatres(false);
+    }
+  };
+
+  const getImage = (path) => {
+    if (!path) return "";
+    return path.startsWith("http") ? path : imageBaseUrl + path;
   };
 
   const handleSubmit = async () => {
@@ -62,6 +88,7 @@ const AddShows = () => {
       setAddingShow(true);
       if (
         !selectedMovie ||
+        !selectedTheatre ||
         Object.keys(dateTimeSelection).length === 0 ||
         !showPrice
       ) {
@@ -72,6 +99,7 @@ const AddShows = () => {
       );
       const payload = {
         movieId: selectedMovie,
+        theatreId: selectedTheatre,
         showInput,
         showPrice: Number(showPrice),
       };
@@ -83,6 +111,7 @@ const AddShows = () => {
       if (data.success) {
         toast.success(data.message);
         setSelectedMovie(null);
+        setSelectedTheatre("");
         setShowPrice("");
         setDateTimeSelection({});
       } else {
@@ -97,49 +126,85 @@ const AddShows = () => {
 
   useEffect(() => {
     if (user) {
-      fetchNowPlayingMovies();
+      fetchMyMovies();
+      fetchTheatres();
     }
   }, [user]);
 
-  return nowPlayingMovies.length > 0 ? (
+  const content = (
     <>
       <Title text1={"Add"} text2={"Shows"} />
-      <p className="mt-10 text-lg font-medium">Now Playing Movies</p>
+      {/* Theatre selector */}
+      <div className="mt-6">
+        <label className="block text-sm font-medium mb-1">Select Theatre</label>
+        {loadingTheatres ? (
+          <div className="mt-2">
+            <Loading />
+          </div>
+        ) : theatres.length > 0 ? (
+          <select
+            value={selectedTheatre}
+            onChange={(e) => setSelectedTheatre(e.target.value)}
+            className="bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-sm outline-none"
+          >
+            <option value="">Choose a theatre</option>
+            {theatres.map((t) => (
+              <option key={t._id} value={t._id}>
+                {t.name}
+                {t.location ? ` • ${t.location}` : ""}
+                {t.screenName ? ` • ${t.screenName}` : ""}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <p className="text-gray-400 text-sm">
+            No theatres yet. Add one in{" "}
+            <span className="font-semibold">Admin → Add Theatre</span>.
+          </p>
+        )}
+      </div>
+      <p className="mt-6 text-lg font-medium">Your Movies</p>
       <div className="overflow-x-auto pb-4">
-        <div className="group flex flex-wrap gap-4 mt-4 w-max">
-          {nowPlayingMovies.map((movie) => (
-            <div
-              key={movie.id}
-              className={`relative max-w-40 cursor-pointer group-hover:not-hover:opacity-40 hover:-translate-y-1 transition duration-300`}
-              onClick={() => setSelectedMovie(movie.id)}
-            >
-              {/* The image of the movie with ratings */}
-              <div className="relative rounded-lg overflow-hidden">
-                <img
-                  src={imageBaseUrl + movie.poster_path}
-                  alt=""
-                  className="w-full object-cover brightness-90"
-                />
-                <div className="text-sm flex items-center justify-between p-2 bg-black/70 w-full absolute bottom-0 left-0">
-                  <p className="flex items-center gap-1 text-gray-400">
-                    <StarIcon className="w-4 h-4 text-primary fill-primary" />
-                    {movie.vote_average.toFixed(1)}
-                  </p>
-                  <p className="text-gray-300">
-                    {convertToK(movie.vote_count)} Votes
-                  </p>
+        {loadingMovies ? (
+          <div className="mt-4">
+            <Loading />
+          </div>
+        ) : myMovies.length > 0 ? (
+          <div className="group flex flex-wrap gap-4 mt-4 w-max">
+            {myMovies.map((movie) => (
+              <div
+                key={movie._id}
+                className={`relative max-w-40 cursor-pointer group-hover:not-hover:opacity-40 hover:-translate-y-1 transition duration-300`}
+                onClick={() => setSelectedMovie(movie._id)}
+              >
+                {/* Movie thumbnail */}
+                <div className="relative rounded-lg overflow-hidden">
+                  <img
+                    src={getImage(movie.poster_path)}
+                    alt=""
+                    className="w-full object-cover brightness-90 h-56"
+                  />
                 </div>
+                {selectedMovie === movie._id && (
+                  <div className="absolute top-2 right-2 flex items-center justify-center bg-primary h-6 w-6 rounded">
+                    <CheckIcon
+                      className="w-4 h-4 text-white"
+                      strokeWidth={2.5}
+                    />
+                  </div>
+                )}
+                <p className="font-medium truncate mt-1">{movie.title}</p>
+                <p className="text-gray-400 text-xs">
+                  {movie.release_date || "No release date"}
+                </p>
               </div>
-              {selectedMovie === movie.id && (
-                <div className="absolute top-2 right-2 flex items-center justify-center bg-primary h-6 w-6 rounded">
-                  <CheckIcon className="w-4 h-4 text-white" strokeWidth={2.5} />
-                </div>
-              )}
-              <p className="font-medium truncate">{movie.title}</p>
-              <p className="text-gray-400 text-sm">{movie.release_date}</p>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-gray-400 mt-4">
+            No movies yet. Add one in <span className="font-semibold">Admin → Add Movie</span>.
+          </p>
+        )}
       </div>
 
       {/* Show Price Input */}
@@ -208,14 +273,14 @@ const AddShows = () => {
       <button
         onClick={handleSubmit}
         disabled={addingShow}
-        className="bg-primary text-white px-8 py-2 mt-6 rounded hover:bg-primary/90 transition-all cursor-pointer"
+        className="bg-primary text-white px-8 py-2 mt-6 rounded hover:bg-primary/90 disabled:bg-primary/60 disabled:cursor-not-allowed transition-all cursor-pointer"
       >
-        Add Show
+        {addingShow ? "Adding..." : "Add Show"}
       </button>
     </>
-  ) : (
-    <Loading />
   );
+
+  return user ? content : <Loading />;
 };
 
 export default AddShows;

@@ -5,6 +5,7 @@ import {
   ListCollapseIcon,
   ListIcon,
   PlusSquareIcon,
+  Building2Icon,
 } from "lucide-react";
 
 const AdminSidebar = () => {
@@ -19,6 +20,26 @@ const AdminSidebar = () => {
       name: "Dashboard",
       path: "/admin",
       icon: LayoutDashboardIcon,
+    },
+    {
+      name: "Add Movie",
+      path: "/admin/add-movie",
+      icon: PlusSquareIcon,
+    },
+    {
+      name: "List Movies",
+      path: "/admin/list-movies",
+      icon: ListIcon,
+    },
+    {
+      name: "Add Theatre",
+      path: "/admin/add-theatre",
+      icon: Building2Icon,
+    },
+    {
+      name: "List Theatres",
+      path: "/admin/list-theatres",
+      icon: ListIcon,
     },
     {
       name: "Add Shows",

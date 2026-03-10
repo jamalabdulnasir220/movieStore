@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import { dummyBookingData } from "../../assets/assets";
 import Loading from "../../components/Loading";
 import Title from "../../components/admin/Title";
 import { dateFormat } from "../../utils/dateFormat";
@@ -61,7 +60,7 @@ const ListBookings = () => {
                 className="border-b border-primary/20 bg-primary/5 even:bg-primary/10"
               >
                 <td className="p-2 min-w-4/5 pl-5">{booking.user.name}</td>
-                <td className="p-2">{booking.show.movie.title}</td>
+                <td className="p-2">{booking.show?.movie?.title}</td>
                 <td className="p-2">{dateFormat(booking.show.showDateTime)}</td>
                 {/* <td>{booking.bookedSeats.join(",")}</td> */}
                 <td className="p-2">

@@ -1,0 +1,19 @@
+import mongoose from "mongoose";
+
+const movieRatingSchema = new mongoose.Schema(
+  {
+    user: { type: String, required: true, ref: "User" },
+    movie: { type: String, required: true, ref: "Movie" },
+    rating: { type: Number, required: true, min: 1, max: 5 },
+  },
+  {
+    timestamps: true,
+  }
+);
+
+movieRatingSchema.index({ user: 1, movie: 1 }, { unique: true });
+
+const MovieRating = mongoose.model("MovieRating", movieRatingSchema);
+
+export default MovieRating;
+

@@ -17,6 +17,10 @@ const Dashboard = () => {
   const currency = import.meta.env.VITE_CURRENCY;
 
   const { axios, getToken, user, imageBaseUrl } = useAppContext();
+  const getImage = (path) => {
+    if (!path) return "";
+    return path.startsWith("http") ? path : imageBaseUrl + path;
+  };
 
   const [dashboardData, setDashboardData] = useState({
     totalBookings: 0,
@@ -105,7 +109,7 @@ const Dashboard = () => {
           >
             <img
               className="h-60 w-full object-cover"
-              src={imageBaseUrl + show?.movie?.poster_path}
+              src={getImage(show?.movie?.poster_path)}
               alt="movie poster"
             />
             <p className="font-medium p-2 truncate">{show?.movie?.title}</p>

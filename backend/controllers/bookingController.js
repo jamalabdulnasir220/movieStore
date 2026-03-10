@@ -2,6 +2,7 @@ import { inngest } from "../innjest/index.js";
 import Booking from "../models/booking.js";
 import Show from "../models/show.js";
 import stripe from "stripe";
+import { clerkClient } from "@clerk/express";
 
 // Function to check seats availability
 const checkSeatsAvailability = async (showId, selectedSeats) => {
@@ -26,6 +27,15 @@ export const createBooking = async (req, res) => {
     const { userId } = req.auth();
     const { showId, selectedSeats } = req.body;
     const { origin } = req.headers;
+
+    // prevent admins from booking shows
+    const user = await clerkClient.users.getUser(userId);
+    if (user?.privateMetadata?.role === "admin") {
+      return res.status(403).json({
+        success: false,
+        message: "Admins are not allowed to book shows.",
+      });
+    }
 
     // check seat availability
     const isAvailable = await checkSeatsAvailability(showId, selectedSeats);
